@@ -86,18 +86,20 @@ func (r *TaskRepository) ListByUser(ctx context.Context, userID string) ([]model
 }
 
 func (r *TaskRepository) Update(ctx context.Context, t *model.Task) error {
-	query := `UPDATE tasks
+	query := `
+		UPDATE tasks
 		SET title = $1, description = $2, status = $3, due_date = $4, updated_at = now()
 		WHERE id = $5 AND user_id = $6
 		RETURNING updated_at`
 
-	err := r.db.QueryRow(ctx, query, t.ID, t.UserID).Scan(&t.UpdatedAt)
-
+	err := r.db.QueryRow(ctx, query,
+		t.Title, t.Description, t.Status, t.DueDate, t.ID, t.UserID,
+	).Scan(&t.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrTaskNotFound
 		}
-		return fmt.Errorf("update ask: %w", err)
+		return fmt.Errorf("update task: %w", err)
 	}
 	return nil
 }

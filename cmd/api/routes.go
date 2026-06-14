@@ -6,14 +6,14 @@ func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", app.healthz)
-
 	mux.HandleFunc("POST /auth/register", app.register)
+	mux.HandleFunc("POST /auth/login", app.login)
 
-	mux.HandleFunc("POST /tasks", app.createTask)
-	mux.HandleFunc("GET /tasks", app.listTasks)
-	mux.HandleFunc("GET /tasks/{id}", app.getTask)
-	mux.HandleFunc("PUT /tasks/{id}", app.updateTask)
-	mux.HandleFunc("DELETE /tasks/{id}", app.deleteTask)
+	mux.Handle("POST /tasks", app.requireAuth(http.HandlerFunc(app.createTask)))
+	mux.Handle("GET /tasks", app.requireAuth(http.HandlerFunc(app.listTasks)))
+	mux.Handle("GET /tasks/{id}", app.requireAuth(http.HandlerFunc(app.getTask)))
+	mux.Handle("PUT /tasks/{id}", app.requireAuth(http.HandlerFunc(app.updateTask)))
+	mux.Handle("DELETE /tasks/{id}", app.requireAuth(http.HandlerFunc(app.deleteTask)))
 
 	return mux
 }

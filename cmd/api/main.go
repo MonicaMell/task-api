@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/MonicaMell/task-api/internal/auth"
 	"github.com/MonicaMell/task-api/internal/config"
 	"github.com/MonicaMell/task-api/internal/repository"
 	"github.com/MonicaMell/task-api/internal/service"
@@ -22,6 +23,7 @@ type application struct {
 	db     *pgxpool.Pool
 	tasks  *service.TaskService
 	auth   *service.AuthService
+	tokens *auth.TokenManager
 }
 
 func main() {
@@ -48,11 +50,13 @@ func run() error {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
+
 	taskRepo := repository.NewTaskRepository(db)
 	taskService := service.NewTaskService(taskRepo)
 
 	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepo)
+	authService := service.NewAuthService(userRepo, tokenManager)
 
 	app := &application{
 		config: cfg,
@@ -60,6 +64,7 @@ func run() error {
 		db:     db,
 		tasks:  taskService,
 		auth:   authService,
+		tokens: tokenManager,
 	}
 
 	srv := &http.Server{

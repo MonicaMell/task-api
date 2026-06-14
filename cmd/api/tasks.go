@@ -8,10 +8,9 @@ import (
 	"github.com/MonicaMell/task-api/internal/service"
 )
 
-const devUserID = "00000000-0000-0000-0000-000000000001"
-
 func (app *application) currentUserID(r *http.Request) string {
-	return devUserID
+	userID, _ := r.Context().Value(userIDKey).(string)
+	return userID
 }
 
 func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +25,6 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusCreated, task)
 }
 
@@ -36,13 +34,11 @@ func (app *application) listTasks(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, tasks)
 }
 
 func (app *application) getTask(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-
 	task, err := app.tasks.Get(r.Context(), app.currentUserID(r), id)
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotFound) {
@@ -52,7 +48,6 @@ func (app *application) getTask(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, task)
 }
 
@@ -73,14 +68,12 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, task)
 }
 
 func (app *application) deleteTask(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	err := app.tasks.Delete(r.Context(), app.currentUserID(r), id)
-
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotFound) {
 			app.errorJSON(w, http.StatusNotFound, "task not found")
@@ -89,6 +82,5 @@ func (app *application) deleteTask(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
 }

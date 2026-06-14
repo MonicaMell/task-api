@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	"github.com/MonicaMell/task-api/internal/auth"
 	"github.com/MonicaMell/task-api/internal/model"
+	"github.com/MonicaMell/task-api/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,12 +17,15 @@ type UserRepository interface {
 }
 
 type AuthService struct {
-	users UserRepository
+	users  UserRepository
+	tokens *auth.TokenManager
 }
 
-func NewAuthService(users UserRepository) *AuthService {
-	return &AuthService{users: users}
+func NewAuthService(users UserRepository, tokens *auth.TokenManager) *AuthService {
+	return &AuthService{users: users, tokens: tokens}
 }
+
+var ErrInvalidCredentials = errors.New("invalid email or password")
 
 type RegisterInput struct {
 	Email    string `json:"email"`
@@ -41,6 +47,28 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*model.Us
 	if err := s.users.Create(ctx, u); err != nil {
 		return nil, err
 	}
-
 	return u, nil
+}
+
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (s *AuthService) Login(ctx context.Context, in LoginInput) (string, error) {
+	email := strings.ToLower(strings.TrimSpace(in.Email))
+
+	user, err := s.users.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return "", ErrInvalidCredentials
+		}
+		return "", err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(in.Password)); err != nil {
+		return "", ErrInvalidCredentials
+	}
+
+	return s.tokens.Generate(user.ID)
 }

@@ -21,6 +21,7 @@ type application struct {
 	logger *slog.Logger
 	db     *pgxpool.Pool
 	tasks  *service.TaskService
+	auth   *service.AuthService
 }
 
 func main() {
@@ -47,19 +48,22 @@ func run() error {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
-	// Composition root: wire repository → service → application.
-	taskRepo := repository.NewRepository(db)
+	taskRepo := repository.NewTaskRepository(db)
 	taskService := service.NewTaskService(taskRepo)
+
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepo)
 
 	app := &application{
 		config: cfg,
 		logger: logger,
 		db:     db,
 		tasks:  taskService,
+		auth:   authService,
 	}
 
 	srv := &http.Server{
-		Addr:         ":" + cfg.Addr, // <-- see note below about this field name
+		Addr:         ":" + cfg.Addr,
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,

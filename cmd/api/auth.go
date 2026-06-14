@@ -14,6 +14,10 @@ func (app *application) register(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	if err := app.validate.Struct(in); err != nil {
+		app.failedValidation(w, err)
+		return
+	}
 
 	user, err := app.auth.Register(r.Context(), in)
 	if err != nil {
@@ -24,7 +28,6 @@ func (app *application) register(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusCreated, user)
 }
 
@@ -32,6 +35,10 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	var in service.LoginInput
 	if err := readJSON(w, r, &in); err != nil {
 		app.errorJSON(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := app.validate.Struct(in); err != nil {
+		app.failedValidation(w, err)
 		return
 	}
 
@@ -44,6 +51,5 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }

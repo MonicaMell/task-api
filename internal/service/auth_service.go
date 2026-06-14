@@ -28,8 +28,8 @@ func NewAuthService(users UserRepository, tokens *auth.TokenManager) *AuthServic
 var ErrInvalidCredentials = errors.New("invalid email or password")
 
 type RegisterInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=72"`
 }
 
 func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*model.User, error) {
@@ -51,8 +51,8 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*model.Us
 }
 
 type LoginInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 func (s *AuthService) Login(ctx context.Context, in LoginInput) (string, error) {

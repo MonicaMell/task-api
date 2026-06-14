@@ -24,9 +24,9 @@ func NewTaskService(repo TaskRepository) *TaskService {
 }
 
 type CreateTaskInput struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Status      string     `json:"status"`
+	Title       string     `json:"title" validate:"required,max=200"`
+	Description string     `json:"description" validate:"max=2000"`
+	Status      string     `json:"status" validate:"omitempty,oneof=todo in_progress done"`
 	DueDate     *time.Time `json:"due_date"`
 }
 
@@ -57,9 +57,9 @@ func (s *TaskService) List(ctx context.Context, userID string) ([]model.Task, er
 }
 
 type UpdateTaskInput struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Status      string     `json:"status"`
+	Title       string     `json:"title" validate:"required,max=200"`
+	Description string     `json:"description" validate:"max=2000"`
+	Status      string     `json:"status" validate:"required,oneof=todo in_progress done"`
 	DueDate     *time.Time `json:"due_date"`
 }
 

@@ -13,17 +13,19 @@ import (
 	"github.com/MonicaMell/task-api/internal/config"
 	"github.com/MonicaMell/task-api/internal/repository"
 	"github.com/MonicaMell/task-api/internal/service"
+	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
 type application struct {
-	config *config.Config
-	logger *slog.Logger
-	db     *pgxpool.Pool
-	tasks  *service.TaskService
-	auth   *service.AuthService
-	tokens *auth.TokenManager
+	config   *config.Config
+	logger   *slog.Logger
+	db       *pgxpool.Pool
+	tasks    *service.TaskService
+	auth     *service.AuthService
+	tokens   *auth.TokenManager
+	validate *validator.Validate
 }
 
 func main() {
@@ -58,13 +60,16 @@ func run() error {
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo, tokenManager)
 
+	validate := validator.New()
+
 	app := &application{
-		config: cfg,
-		logger: logger,
-		db:     db,
-		tasks:  taskService,
-		auth:   authService,
-		tokens: tokenManager,
+		config:   cfg,
+		logger:   logger,
+		db:       db,
+		tasks:    taskService,
+		auth:     authService,
+		tokens:   tokenManager,
+		validate: validate,
 	}
 
 	srv := &http.Server{

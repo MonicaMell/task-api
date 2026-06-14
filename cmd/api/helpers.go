@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -12,6 +13,18 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	if data != nil {
 		_ = json.NewEncoder(w).Encode(data)
 	}
+}
+
+func parseIntQuery(r *http.Request, key string, fallback int) int {
+	v := r.URL.Query().Get(key)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return n
 }
 
 func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {

@@ -10,7 +10,7 @@ import (
 type TaskRepository interface {
 	Create(ctx context.Context, t *model.Task) error
 	GetByID(ctx context.Context, userID, taskID string) (*model.Task, error)
-	ListByUser(ctx context.Context, userID string) ([]model.Task, error)
+	ListByUser(ctx context.Context, userID string, limit, offset int) ([]model.Task, error)
 	Update(ctx context.Context, t *model.Task) error
 	Delete(ctx context.Context, userID, taskID string) error
 }
@@ -52,8 +52,8 @@ func (s *TaskService) Get(ctx context.Context, userID, taskID string) (*model.Ta
 	return s.repo.GetByID(ctx, userID, taskID)
 }
 
-func (s *TaskService) List(ctx context.Context, userID string) ([]model.Task, error) {
-	return s.repo.ListByUser(ctx, userID)
+func (s *TaskService) List(ctx context.Context, userID string, limit, offset int) ([]model.Task, error) {
+	return s.repo.ListByUser(ctx, userID, limit, offset)
 }
 
 type UpdateTaskInput struct {

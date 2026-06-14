@@ -41,7 +41,16 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) listTasks(w http.ResponseWriter, r *http.Request) {
-	tasks, err := app.tasks.List(r.Context(), app.currentUserID(r))
+	limit := parseIntQuery(r, "limit", 20)
+	offset := parseIntQuery(r, "offset", 0)
+	if limit < 1 || limit > 100 {
+		limit = 20 // clamp to a sane default/ceiling
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	tasks, err := app.tasks.List(r.Context(), app.currentUserID(r), limit, offset)
 	if err != nil {
 		app.serverError(w, err)
 		return

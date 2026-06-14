@@ -54,34 +54,34 @@ func (r *TaskRepository) GetByID(ctx context.Context, userID, taskID string) (*m
 	return &t, nil
 }
 
-func (r *TaskRepository) ListByUser(ctx context.Context, userID string) ([]model.Task, error) {
+func (r *TaskRepository) ListByUser(ctx context.Context, userID string, limit, offset int) ([]model.Task, error) {
 	query := `
 		SELECT id, user_id, title, description, status, due_date, created_at, updated_at
 		FROM tasks
 		WHERE user_id = $1
-		ORDER BY created_at DESC`
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
 
-	rows, err := r.db.Query(ctx, query, userID)
-
+	rows, err := r.db.Query(ctx, query, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list tasks: %w", err)
 	}
+	defer rows.Close()
 
 	tasks := make([]model.Task, 0)
-
 	for rows.Next() {
 		var t model.Task
-		if err := rows.Scan(&t.ID, &t.UserID, &t.Title, &t.Description, &t.Status,
-			&t.DueDate, &t.CreatedAt, &t.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&t.ID, &t.UserID, &t.Title, &t.Description, &t.Status,
+			&t.DueDate, &t.CreatedAt, &t.UpdatedAt,
+		); err != nil {
 			return nil, fmt.Errorf("scan task: %w", err)
 		}
 		tasks = append(tasks, t)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate tasks: %w", err)
 	}
-
 	return tasks, nil
 }
 

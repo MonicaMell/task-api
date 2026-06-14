@@ -20,7 +20,7 @@ func (f *fakeTaskRepo) Create(ctx context.Context, t *model.Task) error {
 func (f *fakeTaskRepo) GetByID(ctx context.Context, userID, taskID string) (*model.Task, error) {
 	return nil, nil
 }
-func (f *fakeTaskRepo) ListByUser(ctx context.Context, userID string) ([]model.Task, error) {
+func (f *fakeTaskRepo) ListByUser(ctx context.Context, userID string, limit, offset int) ([]model.Task, error) {
 	return nil, nil
 }
 func (f *fakeTaskRepo) Update(ctx context.Context, t *model.Task) error         { return nil }

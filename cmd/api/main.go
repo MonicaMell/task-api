@@ -52,25 +52,7 @@ func run() error {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
-
-	taskRepo := repository.NewTaskRepository(db)
-	taskService := service.NewTaskService(taskRepo)
-
-	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepo, tokenManager)
-
-	validate := validator.New()
-
-	app := &application{
-		config:   cfg,
-		logger:   logger,
-		db:       db,
-		tasks:    taskService,
-		auth:     authService,
-		tokens:   tokenManager,
-		validate: validate,
-	}
+	app := newApplication(cfg, logger, db)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Addr,
@@ -85,6 +67,23 @@ func run() error {
 		return fmt.Errorf("server error: %w", err)
 	}
 	return nil
+}
+
+func newApplication(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) *application {
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
+
+	taskRepo := repository.NewTaskRepository(db)
+	userRepo := repository.NewUserRepository(db)
+
+	return &application{
+		config:   cfg,
+		logger:   logger,
+		db:       db,
+		tasks:    service.NewTaskService(taskRepo),
+		auth:     service.NewAuthService(userRepo, tokenManager),
+		tokens:   tokenManager,
+		validate: validator.New(),
+	}
 }
 
 func openDB(dsn string) (*pgxpool.Pool, error) {
